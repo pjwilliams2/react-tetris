@@ -28,6 +28,7 @@ class GameBoard extends React.Component
         return (
             <Game>
                 <div>This is the game board with {this.props.rows} rows and {this.props.cols} columns</div>
+                <div>Cleared {this.props.lineCount} lines</div>
                 {this.renderRows()}
             </Game>
         )

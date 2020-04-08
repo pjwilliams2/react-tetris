@@ -3,6 +3,8 @@ import GameBoard from "./GameBoard";
 import pieceTemplates from "./GamePieces";
 import utils from "../utilities";
 
+// import testGrid from "./testGrid";
+
 const pieceTemplateNames = Object.getOwnPropertyNames(pieceTemplates);
 
 class TetrisGame extends React.Component {
@@ -11,6 +13,7 @@ class TetrisGame extends React.Component {
         this.state = {
             clearedLinesCount: 0,
             currentPiece: [],
+            // grid: testGrid,
             grid: [],
             level: 0
         };
@@ -54,7 +57,16 @@ class TetrisGame extends React.Component {
     oneMoveIteration() {
         const didResetPiece = this.moveCurrentPiece(0, 1);
         if (didResetPiece) {
+            this.stopGameIterationInterval();
             //check for lines to clear
+            const clearedCount = this.clearCompletedLines();
+            if (clearedCount > 0) {
+                this.setState(state => {
+                    return {
+                        clearedLinesCount: state.clearedLinesCount + clearedCount
+                    };
+                });
+            }
 
             this.resetGameIterationInterval();
         }
@@ -167,12 +179,52 @@ class TetrisGame extends React.Component {
         return pieceTemplates[pieceTemplateNames[Math.floor(Math.random() * pieceTemplateNames.length)]];
     }
 
+    clearCompletedLines() {
+        const linesToBeRemoved = this.getListOfLinesToClear();
+        console.log(linesToBeRemoved);
+
+        this.setState((state) => {
+            return {
+                grid: state.grid.filter(coords => !linesToBeRemoved.includes(coords.y))
+            };
+        });
+
+        this.condenseGrid(linesToBeRemoved);
+
+        return linesToBeRemoved.length;
+    }
+
+    getListOfLinesToClear() {
+        // count the number of blocks in each row
+        const rowCounts = this.state.grid.reduce((acc, coords) => {
+            acc[coords.y] = (acc[coords.y] || 0) + 1;
+            return acc;
+        }, {});
+
+        return Object.getOwnPropertyNames(rowCounts)
+            .filter(row => rowCounts[row] === this.props.columns)
+            .map(row => Number.parseInt(row));
+    }
+
+    condenseGrid(removedLines) {
+        this.setState(state => {
+            return {
+                grid: state.grid.map(coords => {
+                    removedLines.forEach(lineNumber => coords.y < lineNumber ? coords.y++ : '');
+                    return coords;
+                })
+            };
+        });
+    }
+
     render() {
         return (
             <GameBoard rows={this.props.rows}
                        cols={this.props.columns}
                        currentPiece={this.state.currentPiece}
-                       grid={this.state.grid}/>
+                       grid={this.state.grid}
+                       lineCount={this.state.clearedLinesCount}
+            />
         );
     }
 }
