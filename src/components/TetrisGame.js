@@ -14,7 +14,7 @@ class TetrisGame extends React.Component {
             level: 0
         };
 
-        this.baselineMoveInterval = 200;
+        this.baselineMoveInterval = 400;
         this.rushMode = false;
     }
 
@@ -92,7 +92,6 @@ class TetrisGame extends React.Component {
         const nextMove = this.translatePiece(currentPiece, xDir, yDir);
 
         // make sure the move is valid
-        // console.debug('NextMove', nextMove);
         const boundary = this.doesPieceHitBoundary(nextMove);
 
         if (boundary === 'left' || boundary === 'right' || (boundary === 'grid' && xDir !== 0 && yDir === 0)) {
@@ -103,7 +102,7 @@ class TetrisGame extends React.Component {
             this.setState((state, props) => {
                 return {
                     currentPiece: this.selectNextPiece(),
-                    grid: [].concat(state.grid, state.currentPiece)
+                    grid: state.grid.concat(state.currentPiece)
                 };
             });
             return true;
@@ -126,13 +125,11 @@ class TetrisGame extends React.Component {
     }
 
     rotateCurrentPiece() {
-        console.log('rotating')
         const currentPiece = JSON.parse(JSON.stringify(this.state.currentPiece));
         const rotated = this.rotate(currentPiece);
 
         const boundary = this.doesPieceHitBoundary(rotated);
         if (boundary === false) {
-            console.log('setting next piece');
             this.setState({
                 currentPiece: rotated
             });
@@ -178,12 +175,9 @@ class TetrisGame extends React.Component {
         const minCoords = this.getMinCoords(piece);
         const maxCoords = this.getMaxCoords(piece);
 
-        // console.debug('MinMax', minCoords, maxCoords);
-
         if (minCoords.y < 0) {
             return 'top';
         } else if (maxCoords.y >= this.props.rows) {
-            // console.debug('Hit bottom', this.props.rows);
             return 'bottom';
         } else if (minCoords.x < 0) {
             return 'left';
