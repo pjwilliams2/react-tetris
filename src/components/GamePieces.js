@@ -11,7 +11,13 @@ const pieceTemplates = {
         { x: 0, y: -2, color: 'green'},
         { x: 0, y: -3, color: 'green'},
     ],
-    elShape: [
+    elShapeLeft: [
+        { x: 0, y: -1, color: 'orange'},
+        { x: 0, y: 0, color: 'orange'},
+        { x: 0, y: 1, color: 'orange'},
+        { x: -1, y: 1, color: 'orange'},
+    ],
+    elShapeRight: [
         { x: 0, y: -1, color: 'orange'},
         { x: 0, y: 0, color: 'orange'},
         { x: 0, y: 1, color: 'orange'},
