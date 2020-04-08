@@ -25,13 +25,7 @@ const utils = {
         const xTranslation = Math.round((minCoords.x + maxCoords.x) / 2);
         const yTranslation = Math.round((minCoords.y + maxCoords.y) / 2);
 
-        piece = piece.map(coords => {
-            return {
-                color: coords.color,
-                x: coords.x - xTranslation,
-                y: coords.y - yTranslation
-            };
-        });
+        piece = this.translatePiece(piece, -xTranslation, -yTranslation);
 
         return piece.map(coords => {
             if (coords.x === 0 && coords.y === 0) {
