@@ -1,6 +1,7 @@
 import React from "react";
 import GameBoard from "./GameBoard";
 import pieceTemplates from "./GamePieces";
+import utils from "../utilities";
 
 const pieceTemplateNames = Object.getOwnPropertyNames(pieceTemplates);
 
@@ -89,7 +90,7 @@ class TetrisGame extends React.Component {
 
     moveCurrentPiece(xDir, yDir) {
         const currentPiece = JSON.parse(JSON.stringify(this.state.currentPiece));
-        const nextMove = this.translatePiece(currentPiece, xDir, yDir);
+        const nextMove = utils.translatePiece(currentPiece, xDir, yDir);
 
         // make sure the move is valid
         const boundary = this.doesPieceHitBoundary(nextMove);
@@ -116,17 +117,9 @@ class TetrisGame extends React.Component {
         return false;
     }
 
-    translatePiece(piece, xDir, yDir) {
-        return piece.map(coords => {
-            coords.x += xDir;
-            coords.y += yDir;
-            return coords;
-        });
-    }
-
     rotateCurrentPiece() {
         const currentPiece = JSON.parse(JSON.stringify(this.state.currentPiece));
-        const rotated = this.rotate(currentPiece);
+        const rotated = utils.rotate(currentPiece);
 
         const boundary = this.doesPieceHitBoundary(rotated);
         if (boundary === false) {
@@ -136,44 +129,9 @@ class TetrisGame extends React.Component {
         }
     }
 
-    rotate(piece, degrees = 90) {
-        const minCoords = this.getMinCoords(piece);
-        const maxCoords = this.getMaxCoords(piece);
-        const xTranslation = Math.round((minCoords.x + maxCoords.x) / 2);
-        const yTranslation = Math.round((minCoords.y + maxCoords.y) / 2);
-
-        piece = piece.map(coords => {
-            return {
-                color: coords.color,
-                x: coords.x - xTranslation,
-                y: coords.y - yTranslation
-            };
-        });
-
-        return piece.map(coords => {
-            if (coords.x === 0 && coords.y === 0) {
-                return {
-                    color: coords.color,
-                    x: xTranslation,
-                    y: yTranslation
-                };
-            }
-
-            const hyp = Math.sqrt(coords.x * coords.x + coords.y * coords.y);
-
-            return {
-                color: coords.color,
-                x: xTranslation + (coords.y < 0 ? -1 : 1) * Math.round(
-                        hyp * Math.cos(Math.acos(coords.x / hyp) + (degrees * Math.PI) / 180)),
-                y: yTranslation + (coords.x < 0 ? -1 : 1) * Math.round(
-                        hyp * Math.sin(Math.asin(coords.y / hyp) + (degrees * Math.PI) / 180))
-            };
-        });
-    };
-
     doesPieceHitBoundary(piece) {
-        const minCoords = this.getMinCoords(piece);
-        const maxCoords = this.getMaxCoords(piece);
+        const minCoords = utils.getMinCoords(piece);
+        const maxCoords = utils.getMaxCoords(piece);
 
         if (minCoords.y < 0) {
             return 'top';
@@ -199,28 +157,10 @@ class TetrisGame extends React.Component {
         return false;
     }
 
-    getMinCoords(piece) {
-        const min = (min, curr) => {
-            min.x = curr.x < min.x ? curr.x : min.x;
-            min.y = curr.y < min.y ? curr.y : min.y;
-            return min;
-        };
-        return piece.reduce(min, {x: this.props.columns, y: this.props.rows});
-    }
-
-    getMaxCoords(piece) {
-        const max = (max, curr) => {
-            max.x = curr.x > max.x ? curr.x : max.x;
-            max.y = curr.y > max.y ? curr.y : max.y;
-            return max;
-        };
-        return piece.reduce(max, {x: 0, y: 0});
-    }
-
     selectNextPiece() {
         // center the piece on the board
         const template = this.getRandomPieceTemplate();
-        return this.translatePiece(JSON.parse(JSON.stringify(template)), Math.floor(this.props.columns / 2), 0);
+        return utils.translatePiece(JSON.parse(JSON.stringify(template)), Math.floor(this.props.columns / 2), 0);
     }
 
     getRandomPieceTemplate() {
