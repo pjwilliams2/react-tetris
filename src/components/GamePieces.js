@@ -23,6 +23,12 @@ const pieceTemplates = {
         { x: 0, y: 1, color: 'orange'},
         { x: 1, y: 1, color: 'orange'},
     ],
+    teeShape: [
+        { x: 0, y: 0, color: 'red' },
+        { x: -1, y: 1, color: 'red' },
+        { x: 0, y: 1, color: 'red' },
+        { x: 1, y: 1, color: 'red' }
+    ],
     zigZagLeft: [
         { x: -1, y: -1, color: 'violet'},
         { x: 0, y: -1, color: 'violet'},

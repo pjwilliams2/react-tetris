@@ -23,16 +23,16 @@ class TetrisGame extends React.Component {
         this.lastTick = window.performance.now();
     }
 
-    componentDidMount() {
+    componentDidMount(): void {
         this.init();
         this.startGameIterationInterval();
     }
 
-    componentWillUnmount() {
+    componentWillUnmount(): void {
         this.stopGameIterationInterval();
     }
 
-    init() {
+    init(): void {
         const piece = this.selectNextPiece();
         this.setState({currentPiece: piece}, () => this.shadowState = JSON.parse(JSON.stringify(this.state)));
         this.updateTickLength();
@@ -103,7 +103,7 @@ class TetrisGame extends React.Component {
         this.commitUpdates();
     }
 
-    moveCurrentPiece(xDir, yDir) {
+    moveCurrentPiece(xDir: number, yDir: number): boolean {
         const currentPiece = JSON.parse(JSON.stringify(this.shadowState.currentPiece));
         const nextMove = utils.translatePiece(currentPiece, xDir, yDir);
 
