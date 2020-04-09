@@ -19,12 +19,13 @@ class TetrisGame extends React.Component {
         };
 
         this.baselineMoveInterval = 400;
-        this.rushMode = false;
+        this.tickLength = this.baselineMoveInterval;
+        this.lastTick = window.performance.now();
     }
 
     componentDidMount() {
         this.init();
-        this.startGameIterationInterval(this.calculateInterval());
+        this.startGameIterationInterval();
     }
 
     componentWillUnmount() {
@@ -33,49 +34,51 @@ class TetrisGame extends React.Component {
 
     init() {
         const piece = this.selectNextPiece();
-        this.setState({currentPiece: piece});
+        this.setState({currentPiece: piece}, () => this.shadowState = JSON.parse(JSON.stringify(this.state)));
+        this.updateTickLength();
         document.addEventListener('keydown', event => this.handleKeyPress(event));
     }
 
-    startGameIterationInterval(interval) {
-        this.gameIterationInterval = setInterval(() => this.oneMoveIteration(), interval);
+    startGameIterationInterval() {
+        this.gameIterationInterval = setInterval(() => this.mainLoop(), 10);
     }
 
     stopGameIterationInterval() {
         this.gameIterationInterval && clearInterval(this.gameIterationInterval);
+        this.gameIterationInterval = null;
     }
 
-    calculateInterval() {
-        if (this.rushMode) return 25;
-        return Math.max(this.baselineMoveInterval - this.calculateLevel() * 5, 25);
+    updateTickLength(rushMode = false) {
+        this.tickLength = rushMode
+            ? 25
+            : Math.max(this.baselineMoveInterval - this.calculateLevel() * 5, 25);
     }
 
     calculateLevel() {
         return Math.floor(this.state.clearedLinesCount / 10);
     }
 
-    oneMoveIteration() {
+    mainLoop() {
+        const currTick = window.performance.now();
+        const nextTick = this.lastTick + this.tickLength;
+
+        if (currTick < nextTick) {
+            return;
+        }
+
         const didResetPiece = this.moveCurrentPiece(0, 1);
         if (didResetPiece) {
-            this.stopGameIterationInterval();
             //check for lines to clear
             const clearedCount = this.clearCompletedLines();
             if (clearedCount > 0) {
-                this.setState(state => {
-                    return {
-                        clearedLinesCount: state.clearedLinesCount + clearedCount
-                    };
-                });
+                this.shadowState.clearedLinesCount += clearedCount;
             }
 
-            this.resetGameIterationInterval();
+            this.updateTickLength();
         }
-    }
 
-    resetGameIterationInterval(rushMode = false) {
-        this.rushMode = rushMode;
-        this.stopGameIterationInterval();
-        this.startGameIterationInterval(this.calculateInterval());
+        this.commitUpdates();
+        this.lastTick = window.performance.now();
     }
 
     handleKeyPress(event) {
@@ -85,9 +88,7 @@ class TetrisGame extends React.Component {
             this.rotateCurrentPiece();
         } else if (event.key === 'ArrowDown') {
             // send the current piece all the way down
-            this.resetGameIterationInterval(true);
-            // temp
-            // this.moveCurrentPiece(0, 1);
+            this.updateTickLength(true)
         } else if (event.key === 'ArrowLeft') {
             this.moveCurrentPiece(-1, 0);
         } else if (event.key === 'ArrowRight') {
@@ -98,10 +99,12 @@ class TetrisGame extends React.Component {
         } else {
             console.log(event);
         }
+
+        this.commitUpdates();
     }
 
     moveCurrentPiece(xDir, yDir) {
-        const currentPiece = JSON.parse(JSON.stringify(this.state.currentPiece));
+        const currentPiece = JSON.parse(JSON.stringify(this.shadowState.currentPiece));
         const nextMove = utils.translatePiece(currentPiece, xDir, yDir);
 
         // make sure the move is valid
@@ -112,32 +115,24 @@ class TetrisGame extends React.Component {
         }
 
         if (boundary === 'bottom' || boundary === 'grid') {
-            this.setState((state, props) => {
-                return {
-                    currentPiece: this.selectNextPiece(),
-                    grid: state.grid.concat(state.currentPiece)
-                };
-            });
+            this.shadowState.grid = this.shadowState.grid.concat(this.shadowState.currentPiece);
+            this.shadowState.currentPiece = this.selectNextPiece();
             return true;
         }
 
         // move the piece
-        this.setState(() => ({
-            currentPiece: nextMove
-        }));
+        this.shadowState.currentPiece = nextMove;
 
         return false;
     }
 
     rotateCurrentPiece() {
-        const currentPiece = JSON.parse(JSON.stringify(this.state.currentPiece));
+        const currentPiece = JSON.parse(JSON.stringify(this.shadowState.currentPiece));
         const rotated = utils.rotate(currentPiece);
 
         const boundary = this.doesPieceHitBoundary(rotated);
         if (boundary === false) {
-            this.setState({
-                currentPiece: rotated
-            });
+            this.shadowState.currentPiece = rotated;
         }
     }
 
@@ -155,7 +150,7 @@ class TetrisGame extends React.Component {
             return 'right';
         }
 
-        const intersectedCoords = this.state.grid.filter(coord => {
+        const intersectedCoords = this.shadowState.grid.filter(coord => {
             const collisions = piece.filter(pieceCoord => {
                 return pieceCoord.x === coord.x && pieceCoord.y === coord.y;
             });
@@ -181,13 +176,7 @@ class TetrisGame extends React.Component {
 
     clearCompletedLines() {
         const linesToBeRemoved = this.getListOfLinesToClear();
-        console.log(linesToBeRemoved);
-
-        this.setState((state) => {
-            return {
-                grid: state.grid.filter(coords => !linesToBeRemoved.includes(coords.y))
-            };
-        });
+        this.shadowState.grid = this.shadowState.grid.filter(coords => !linesToBeRemoved.includes(coords.y));
 
         this.condenseGrid(linesToBeRemoved);
 
@@ -196,7 +185,7 @@ class TetrisGame extends React.Component {
 
     getListOfLinesToClear() {
         // count the number of blocks in each row
-        const rowCounts = this.state.grid.reduce((acc, coords) => {
+        const rowCounts = this.shadowState.grid.reduce((acc, coords) => {
             acc[coords.y] = (acc[coords.y] || 0) + 1;
             return acc;
         }, {});
@@ -207,14 +196,23 @@ class TetrisGame extends React.Component {
     }
 
     condenseGrid(removedLines) {
-        this.setState(state => {
-            return {
-                grid: state.grid.map(coords => {
-                    removedLines.forEach(lineNumber => coords.y < lineNumber ? coords.y++ : '');
-                    return coords;
-                })
-            };
+        // sort ascending
+        removedLines.sort((a, b) => a - b);
+
+        // sort descending based on row number
+        this.shadowState.grid.sort((a, b) => b.y - a.y);
+        this.shadowState.grid = this.shadowState.grid.map(coords => {
+            for (const lineNumber of removedLines) {
+                if (coords.y < lineNumber) {
+                    coords.y++;
+                }
+            }
+            return coords;
         });
+    }
+
+    commitUpdates() {
+        this.setState(() => this.shadowState);
     }
 
     render() {
