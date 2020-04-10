@@ -1,4 +1,5 @@
-import React from "react";
+// @flow
+import * as React from "react";
 import GameBoard from "./GameBoard";
 import pieceTemplates from "./GamePieces";
 import utils from "../utilities";
@@ -7,16 +8,35 @@ import utils from "../utilities";
 
 const pieceTemplateNames = Object.getOwnPropertyNames(pieceTemplates);
 
-class TetrisGame extends React.Component {
-    constructor(props) {
+type Props = {
+    rows: number,
+    columns: number
+};
+
+type State = {
+    clearedLinesCount: number,
+    currentPiece: Array<Object>,
+    grid: Array<Object>,
+    level: number
+};
+
+class TetrisGame extends React.Component<Props, State> {
+    state = {
+        clearedLinesCount: 0,
+        currentPiece: [],
+        // grid: testGrid,
+        grid: [],
+        level: 0
+    };
+
+    shadowState: Object;
+    lastTick: number;
+    tickLength: number
+    baselineMoveInterval: number;
+    mainLoopIntervalId: ?IntervalID;
+
+    constructor(props: Props) {
         super(props);
-        this.state = {
-            clearedLinesCount: 0,
-            currentPiece: [],
-            // grid: testGrid,
-            grid: [],
-            level: 0
-        };
 
         this.baselineMoveInterval = 400;
         this.tickLength = this.baselineMoveInterval;
@@ -36,19 +56,19 @@ class TetrisGame extends React.Component {
         const piece = this.selectNextPiece();
         this.setState({currentPiece: piece}, () => this.shadowState = JSON.parse(JSON.stringify(this.state)));
         this.updateTickLength();
-        document.addEventListener('keydown', event => this.handleKeyPress(event));
+        document.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyPress(event));
     }
 
-    startGameIterationInterval() {
-        this.gameIterationInterval = setInterval(() => this.mainLoop(), 10);
+    startGameIterationInterval(): void {
+        this.mainLoopIntervalId = setInterval(() => this.mainLoop(), 10);
     }
 
-    stopGameIterationInterval() {
-        this.gameIterationInterval && clearInterval(this.gameIterationInterval);
-        this.gameIterationInterval = null;
+    stopGameIterationInterval(): void {
+        this.mainLoopIntervalId && clearInterval(this.mainLoopIntervalId);
+        this.mainLoopIntervalId = null;
     }
 
-    updateTickLength(rushMode = false) {
+    updateTickLength(rushMode: boolean = false): void {
         this.tickLength = rushMode
             ? 25
             : Math.max(this.baselineMoveInterval - this.calculateLevel() * 5, 25);
@@ -81,10 +101,11 @@ class TetrisGame extends React.Component {
         this.lastTick = window.performance.now();
     }
 
-    handleKeyPress(event) {
+    handleKeyPress(event: KeyboardEvent): void {
         event.preventDefault();
         if (event.key === 'ArrowUp') {
             // rotate the piece
+            console.log('UpArrow');
             this.rotateCurrentPiece();
         } else if (event.key === 'ArrowDown') {
             // send the current piece all the way down
@@ -126,7 +147,7 @@ class TetrisGame extends React.Component {
         return false;
     }
 
-    rotateCurrentPiece() {
+    rotateCurrentPiece(): void {
         const currentPiece = JSON.parse(JSON.stringify(this.shadowState.currentPiece));
         const rotated = utils.rotate(currentPiece);
 
@@ -136,7 +157,7 @@ class TetrisGame extends React.Component {
         }
     }
 
-    doesPieceHitBoundary(piece) {
+    doesPieceHitBoundary(piece: Array<Object>): string | false {
         const minCoords = utils.getMinCoords(piece);
         const maxCoords = utils.getMaxCoords(piece);
 
@@ -164,17 +185,17 @@ class TetrisGame extends React.Component {
         return false;
     }
 
-    selectNextPiece() {
+    selectNextPiece(): Array<Object> {
         // center the piece on the board
         const template = this.getRandomPieceTemplate();
         return utils.translatePiece(JSON.parse(JSON.stringify(template)), Math.floor(this.props.columns / 2), 0);
     }
 
-    getRandomPieceTemplate() {
+    getRandomPieceTemplate(): Array<Object> {
         return pieceTemplates[pieceTemplateNames[Math.floor(Math.random() * pieceTemplateNames.length)]];
     }
 
-    clearCompletedLines() {
+    clearCompletedLines(): number {
         const linesToBeRemoved = this.getListOfLinesToClear();
         this.shadowState.grid = this.shadowState.grid.filter(coords => !linesToBeRemoved.includes(coords.y));
 
@@ -183,7 +204,7 @@ class TetrisGame extends React.Component {
         return linesToBeRemoved.length;
     }
 
-    getListOfLinesToClear() {
+    getListOfLinesToClear(): Array<number> {
         // count the number of blocks in each row
         const rowCounts = this.shadowState.grid.reduce((acc, coords) => {
             acc[coords.y] = (acc[coords.y] || 0) + 1;
@@ -195,7 +216,7 @@ class TetrisGame extends React.Component {
             .map(row => Number.parseInt(row));
     }
 
-    condenseGrid(removedLines) {
+    condenseGrid(removedLines: Array<number>): void {
         // sort ascending
         removedLines.sort((a, b) => a - b);
 
@@ -211,7 +232,7 @@ class TetrisGame extends React.Component {
         });
     }
 
-    commitUpdates() {
+    commitUpdates(): void {
         this.setState(() => this.shadowState);
     }
 
