@@ -5,6 +5,6 @@ export default styled.div`
     background-color: ${props => props.color || "transparent"};
     border: 2px black solid;
     height: 100%;
-    width: 20px;
+    width: 4vh;
 `;
 

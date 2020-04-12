@@ -6,7 +6,7 @@ import utils from "../utilities";
 const Row = styled.div`
     display: flex;
     background-color: white;
-    height: 20px;
+    height: 4vh;
     width: 100%;
 `;
 

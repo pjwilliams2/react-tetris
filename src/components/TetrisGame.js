@@ -6,7 +6,7 @@ import utils from "../utilities";
 
 // import testGrid from "./testGrid";
 
-const pieceTemplateNames = Object.getOwnPropertyNames(pieceTemplates);
+const pieceTemplateNames: Array<Object> = Object.getOwnPropertyNames(pieceTemplates);
 
 type Props = {
     rows: number,
@@ -17,7 +17,8 @@ type State = {
     clearedLinesCount: number,
     currentPiece: Array<Object>,
     grid: Array<Object>,
-    level: number
+    level: number,
+    score: number
 };
 
 class TetrisGame extends React.Component<Props, State> {
@@ -26,26 +27,24 @@ class TetrisGame extends React.Component<Props, State> {
         currentPiece: [],
         // grid: testGrid,
         grid: [],
-        level: 0
+        level: 1,
+        score: 0
     };
 
     shadowState: Object;
     lastTick: number;
     tickLength: number
-    baselineMoveInterval: number;
     mainLoopIntervalId: ?IntervalID;
 
     constructor(props: Props) {
         super(props);
 
-        this.baselineMoveInterval = 400;
-        this.tickLength = this.baselineMoveInterval;
         this.lastTick = window.performance.now();
     }
 
     componentDidMount(): void {
         this.init();
-        this.startGameIterationInterval();
+        this.startGameIterationInterval()
     }
 
     componentWillUnmount(): void {
@@ -53,14 +52,15 @@ class TetrisGame extends React.Component<Props, State> {
     }
 
     init(): void {
-        const piece = this.selectNextPiece();
-        this.setState({currentPiece: piece}, () => this.shadowState = JSON.parse(JSON.stringify(this.state)));
-        this.updateTickLength();
+        this.setState({currentPiece: this.selectNextPiece()}, () => {
+            this.shadowState = JSON.parse(JSON.stringify(this.state));
+            this.updateTickLength();
+        });
         document.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyPress(event));
     }
 
     startGameIterationInterval(): void {
-        this.mainLoopIntervalId = setInterval(() => this.mainLoop(), 10);
+        this.mainLoopIntervalId = setInterval(() => this.mainLoop(), 1);
     }
 
     stopGameIterationInterval(): void {
@@ -68,14 +68,14 @@ class TetrisGame extends React.Component<Props, State> {
         this.mainLoopIntervalId = null;
     }
 
-    updateTickLength(rushMode: boolean = false): void {
-        this.tickLength = rushMode
-            ? 25
-            : Math.max(this.baselineMoveInterval - this.calculateLevel() * 5, 25);
+    updateTickLength(hardDrop: boolean = false): void {
+        this.tickLength = hardDrop
+            ? 0.01
+            : Math.pow(0.8 - ((this.shadowState.level - 1) * 0.007), this.shadowState.level - 1) * 1000.0;
     }
 
     calculateLevel() {
-        return Math.floor(this.state.clearedLinesCount / 10);
+        return Math.ceil(this.state.clearedLinesCount / 10);
     }
 
     mainLoop() {
@@ -92,6 +92,8 @@ class TetrisGame extends React.Component<Props, State> {
             const clearedCount = this.clearCompletedLines();
             if (clearedCount > 0) {
                 this.shadowState.clearedLinesCount += clearedCount;
+                this.shadowState.score += this.calculatePoints(clearedCount);
+                this.shadowState.level = this.calculateLevel();
             }
 
             this.updateTickLength();
@@ -135,6 +137,13 @@ class TetrisGame extends React.Component<Props, State> {
             return false;
         }
 
+        const anyNegYCoords = nextMove.some(coords => coords.y < 0);
+        if (boundary === 'grid' && yDir !== 0 && anyNegYCoords) {
+            console.log('Game over');
+            this.stopGameIterationInterval();
+            return false;
+        }
+
         if (boundary === 'bottom' || boundary === 'grid') {
             this.shadowState.grid = this.shadowState.grid.concat(this.shadowState.currentPiece);
             this.shadowState.currentPiece = this.selectNextPiece();
@@ -161,9 +170,7 @@ class TetrisGame extends React.Component<Props, State> {
         const minCoords = utils.getMinCoords(piece);
         const maxCoords = utils.getMaxCoords(piece);
 
-        if (minCoords.y < 0) {
-            return 'top';
-        } else if (maxCoords.y >= this.props.rows) {
+        if (maxCoords.y >= this.props.rows) {
             return 'bottom';
         } else if (minCoords.x < 0) {
             return 'left';
@@ -232,6 +239,13 @@ class TetrisGame extends React.Component<Props, State> {
         });
     }
 
+    calculatePoints(linesClearedCount: number): number {
+        return Math.max(0, 50 * linesClearedCount)
+            + Math.max(0, 100 * (linesClearedCount - 1))
+            + Math.max(0, 200 * (linesClearedCount - 2))
+            + Math.max(0, 400 * (linesClearedCount - 3));
+    }
+
     commitUpdates(): void {
         this.setState(() => this.shadowState);
     }
@@ -243,6 +257,7 @@ class TetrisGame extends React.Component<Props, State> {
                        currentPiece={this.state.currentPiece}
                        grid={this.state.grid}
                        lineCount={this.state.clearedLinesCount}
+                       score={this.state.score}
             />
         );
     }

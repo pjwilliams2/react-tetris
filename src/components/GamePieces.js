@@ -12,16 +12,16 @@ const pieceTemplates = {
         { x: 0, y: -3, color: 'green'},
     ],
     elShapeLeft: [
+        { x: 0, y: -2, color: 'orange'},
         { x: 0, y: -1, color: 'orange'},
         { x: 0, y: 0, color: 'orange'},
-        { x: 0, y: 1, color: 'orange'},
-        { x: -1, y: 1, color: 'orange'},
+        { x: -1, y: 0, color: 'orange'},
     ],
     elShapeRight: [
+        { x: 0, y: -2, color: 'orange'},
         { x: 0, y: -1, color: 'orange'},
         { x: 0, y: 0, color: 'orange'},
-        { x: 0, y: 1, color: 'orange'},
-        { x: 1, y: 1, color: 'orange'},
+        { x: 1, y: 0, color: 'orange'},
     ],
     teeShape: [
         { x: 0, y: 0, color: 'red' },

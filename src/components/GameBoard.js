@@ -4,8 +4,8 @@ import TetrisRow from "./TetrisRow";
 
 const Game = styled.div`
     border: 1px black solid;
-    height: 90vh;
-    width: 40%;
+    height: 100%;
+    width: 100%;
     margin: 50px 0 0 0;
 `
 
@@ -30,6 +30,7 @@ class GameBoard extends React.Component
                 <div>This is the game board with {this.props.rows} rows and {this.props.cols} columns</div>
                 <div>Cleared {this.props.lineCount} lines</div>
                 {this.renderRows()}
+                <div>Score {this.props.score}</div>
             </Game>
         )
     }
