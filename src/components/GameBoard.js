@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import TetrisRow from "./TetrisRow";
+import utils from "../utilities";
 
 const Game = styled.div`
     // border: 1px black solid;
@@ -12,7 +13,7 @@ const Game = styled.div`
 class GameBoard extends React.Component
 {
     renderRows() {
-        const blockIndices = [...Array(this.props.rows).keys()];
+        const blockIndices = utils.range(this.props.rows);
         return blockIndices.map(index => {
             const filledColumns = this.props.grid
                 .concat(this.props.currentPiece)
