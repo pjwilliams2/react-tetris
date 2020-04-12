@@ -3,7 +3,7 @@ import styled from "styled-components";
 import TetrisRow from "./TetrisRow";
 
 const Game = styled.div`
-    border: 1px black solid;
+    // border: 1px black solid;
     height: 100%;
     width: 100%;
     margin: 50px 0 0 0;
@@ -26,11 +26,14 @@ class GameBoard extends React.Component
 
     render() {
         return (
-            <Game>
-                <div>This is the game board with {this.props.rows} rows and {this.props.cols} columns</div>
-                <div>Cleared {this.props.lineCount} lines</div>
-                {this.renderRows()}
-                <div>Score {this.props.score}</div>
+            <Game className="game-board">
+                <div className="game-stats">
+                    <p>Score: {this.props.score}</p>
+                    <p>Lines: {this.props.lineCount}</p>
+                </div>
+                <div>
+                    {this.renderRows()}
+                </div>
             </Game>
         )
     }

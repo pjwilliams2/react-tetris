@@ -1,11 +1,18 @@
 .App {
-  text-align: center;
   height: 90vh;
-  width: 40%;
 }
 
 #root {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.game-board {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-stats {
+  width: 200px;
 }

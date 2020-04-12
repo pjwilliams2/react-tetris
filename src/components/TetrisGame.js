@@ -38,8 +38,6 @@ class TetrisGame extends React.Component<Props, State> {
 
     constructor(props: Props) {
         super(props);
-
-        this.lastTick = window.performance.now();
     }
 
     componentDidMount(): void {
@@ -52,11 +50,13 @@ class TetrisGame extends React.Component<Props, State> {
     }
 
     init(): void {
+        this.lastTick = window.performance.now();
         this.setState({currentPiece: this.selectNextPiece()}, () => {
             this.shadowState = JSON.parse(JSON.stringify(this.state));
             this.updateTickLength();
         });
         document.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyPress(event));
+        document.addEventListener('keyup', (event: KeyboardEvent) => this.handleKeyUp(event));
     }
 
     startGameIterationInterval(): void {
@@ -68,10 +68,14 @@ class TetrisGame extends React.Component<Props, State> {
         this.mainLoopIntervalId = null;
     }
 
-    updateTickLength(hardDrop: boolean = false): void {
-        this.tickLength = hardDrop
-            ? 0.01
-            : Math.pow(0.8 - ((this.shadowState.level - 1) * 0.007), this.shadowState.level - 1) * 1000.0;
+    updateTickLength(hardDrop: string = 'none'): void {
+        this.tickLength = Math.pow(0.8 - ((this.shadowState.level - 1) * 0.007), this.shadowState.level - 1) * 1000.0;
+        if (hardDrop === 'hard') {
+            this.tickLength = 0.01;
+        } else if (hardDrop === 'soft') {
+            this.tickLength /= 20;
+        }
+
     }
 
     calculateLevel() {
@@ -111,19 +115,25 @@ class TetrisGame extends React.Component<Props, State> {
             this.rotateCurrentPiece();
         } else if (event.key === 'ArrowDown') {
             // send the current piece all the way down
-            this.updateTickLength(true)
+            this.updateTickLength('soft')
         } else if (event.key === 'ArrowLeft') {
             this.moveCurrentPiece(-1, 0);
         } else if (event.key === 'ArrowRight') {
             this.moveCurrentPiece(1, 0);
         } else if (event.keyCode === 32) {
             // spacebar
-            this.stopGameIterationInterval();
+            this.updateTickLength('hard');
         } else {
             console.log(event);
         }
 
         this.commitUpdates();
+    }
+
+    handleKeyUp(event: KeyboardEvent): void {
+        if (event.key === 'ArrowDown') {
+            this.updateTickLength();
+        }
     }
 
     moveCurrentPiece(xDir: number, yDir: number): boolean {
