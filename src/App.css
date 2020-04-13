@@ -9,10 +9,42 @@
 }
 
 .game-board {
+  position: relative;
+}
+
+.game-board-layout {
   display: flex;
   flex-direction: row;
 }
 
 .game-stats {
   width: 200px;
+}
+
+.game-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0,0,0,0.7);
+  opacity: 0.8;
+  z-index: 10;
+}
+
+.game-overlay-text {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+
+  color: white;
+  font-size: xx-large;
+  font-weight: bold;
+  text-align: center;
+}
+
+.hidden {
+  display: none;
 }

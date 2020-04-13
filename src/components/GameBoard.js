@@ -26,17 +26,23 @@ class GameBoard extends React.Component
     }
 
     render() {
+        const overlayClass = this.props.showOverlay ? 'game-overlay' : 'hidden';
         return (
             <Game className="game-board">
-                <div className="game-stats">
-                    <p>Score: {this.props.score}</p>
-                    <p>Lines: {this.props.lineCount}</p>
+                <div className={overlayClass}>
+                    <div className="game-overlay-text">{this.props.overlayText}</div>
                 </div>
-                <div>
-                    {this.renderRows()}
+                <div className="game-board-layout">
+                    <div className="game-stats">
+                        <p>Score: {this.props.score}</p>
+                        <p>Lines: {this.props.lineCount}</p>
+                    </div>
+                    <div>
+                        {this.renderRows()}
+                    </div>
                 </div>
             </Game>
-        )
+        );
     }
 }
 

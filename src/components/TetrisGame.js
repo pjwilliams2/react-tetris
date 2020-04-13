@@ -17,20 +17,26 @@ type State = {
     clearedLinesCount: number,
     currentPiece: Array<Object>,
     grid: Array<Object>,
+    isGameRunning: boolean,
     level: number,
-    score: number
+    overlayText: string,
+    score: number,
+    showOverlay: boolean
 };
 
 class TetrisGame extends React.Component<Props, State> {
     state = {
         clearedLinesCount: 0,
         currentPiece: [],
-        // grid: testGrid,
         grid: [],
+        isGameRunning: false,
         level: 1,
-        score: 0
+        overlayText: 'Press any key to start',
+        score: 0,
+        showOverlay: true
     };
 
+    initialGameState: Object;
     shadowState: Object;
     lastTick: number;
     tickLength: number
@@ -38,28 +44,64 @@ class TetrisGame extends React.Component<Props, State> {
 
     constructor(props: Props) {
         super(props);
+
+        this.initialGameState = {
+            clearedLinesCount: 0,
+            currentPiece: [],
+            // grid: testGrid,
+            grid: [],
+            isGameRunning: false,
+            level: 1,
+            overlayText: 'Press any key to start',
+            score: 0,
+            showOverlay: true
+        };
     }
 
     componentDidMount(): void {
-        this.init();
-        this.startGameIterationInterval()
+        this.initializePreGameEventHandlers();
     }
 
     componentWillUnmount(): void {
         this.stopGameIterationInterval();
     }
 
-    init(): void {
-        this.lastTick = window.performance.now();
-        this.setState({currentPiece: this.selectNextPiece()}, () => {
+    initializePreGameEventHandlers(): void {
+        this.preGameHandleKeyPress = this.preGameHandleKeyPress.bind(this);
+        document.addEventListener('keypress', this.preGameHandleKeyPress);
+    }
+
+    startGame(): void {
+        this.initializeGameState();
+        this.addKeyboardEventHandlers();
+        this.startGameIterationInterval();
+    }
+
+    resetGame(): void {
+        this.initializeGameState();
+        this.startGameIterationInterval();
+    }
+
+    initializeGameState(): void {
+        const initialState = Object.assign({}, this.initialGameState, {
+            currentPiece: this.selectNextPiece(),
+            isGameRunning: true,
+            showOverlay: false
+        });
+
+        this.setState(initialState, () => {
             this.shadowState = JSON.parse(JSON.stringify(this.state));
             this.updateTickLength();
         });
+    }
+
+    addKeyboardEventHandlers(): void {
         document.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyPress(event));
         document.addEventListener('keyup', (event: KeyboardEvent) => this.handleKeyUp(event));
     }
 
     startGameIterationInterval(): void {
+        this.lastTick = window.performance.now();
         this.mainLoopIntervalId = setInterval(() => this.mainLoop(), 1);
     }
 
@@ -107,8 +149,20 @@ class TetrisGame extends React.Component<Props, State> {
         this.lastTick = window.performance.now();
     }
 
+    preGameHandleKeyPress(event: KeyboardEvent): void {
+        event.preventDefault();
+        document.removeEventListener('keypress', this.preGameHandleKeyPress);
+        this.startGame();
+    }
+
     handleKeyPress(event: KeyboardEvent): void {
         event.preventDefault();
+
+        if (!this.shadowState.isGameRunning) {
+            this.resetGame();
+            return;
+        }
+
         if (event.key === 'ArrowUp') {
             // rotate the piece
             console.log('UpArrow');
@@ -150,7 +204,7 @@ class TetrisGame extends React.Component<Props, State> {
         const anyNegYCoords = nextMove.some(coords => coords.y < 0);
         if (boundary === 'grid' && yDir !== 0 && anyNegYCoords) {
             console.log('Game over');
-            this.stopGameIterationInterval();
+            this.initiateGameOver();
             return false;
         }
 
@@ -200,6 +254,13 @@ class TetrisGame extends React.Component<Props, State> {
         }
 
         return false;
+    }
+
+    initiateGameOver(): void {
+        this.shadowState.isGameRunning = false;
+        this.shadowState.showOverlay = true;
+        this.shadowState.overlayText = <span>Game Over <br /> Press any key to start</span>;
+        this.stopGameIterationInterval();
     }
 
     selectNextPiece(): Array<Object> {
@@ -268,6 +329,8 @@ class TetrisGame extends React.Component<Props, State> {
                        grid={this.state.grid}
                        lineCount={this.state.clearedLinesCount}
                        score={this.state.score}
+                       showOverlay={this.state.showOverlay}
+                       overlayText={this.state.overlayText}
             />
         );
     }
