@@ -270,7 +270,11 @@ class TetrisGame extends React.Component<Props, State> {
     }
 
     getRandomPieceTemplate(): Array<Object> {
-        return pieceTemplates[pieceTemplateNames[Math.floor(Math.random() * pieceTemplateNames.length)]];
+        const arr = new Uint32Array(1);
+        window.crypto.getRandomValues(arr);
+        const index = arr[0] % pieceTemplateNames.length;
+
+        return pieceTemplates[pieceTemplateNames[index]];
     }
 
     clearCompletedLines(): number {
