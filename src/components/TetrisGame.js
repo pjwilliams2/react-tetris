@@ -96,7 +96,7 @@ class TetrisGame extends React.Component<Props, State> {
     }
 
     addKeyboardEventHandlers(): void {
-        document.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyPress(event));
+        document.addEventListener('keydown', (event: KeyboardEvent) => this.handleKeyDown(event));
         document.addEventListener('keyup', (event: KeyboardEvent) => this.handleKeyUp(event));
     }
 
@@ -155,7 +155,7 @@ class TetrisGame extends React.Component<Props, State> {
         this.startGame();
     }
 
-    handleKeyPress(event: KeyboardEvent): void {
+    handleKeyDown(event: KeyboardEvent): void {
         event.preventDefault();
 
         if (!this.shadowState.isGameRunning) {
